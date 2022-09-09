@@ -6,6 +6,7 @@ const utils = require("../../utils/util_methods");
 const constants = require("../../utils/constants");
 const tokenSchema = require("../../schemas/token_schema");
 const commentSchema = require("../../schemas/object/comment_schema");
+const notificationSchema = require("../../schemas/object/notification_schema");
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ router.post("/add", utils.extractToken, (req, res) => {
 router.get("/all", utils.extractToken, (req, res) => {
     tokenSchema
     .find({ token: req.token })
-    .sort({ creating_date: 1 })
+    .sort({ creating_date: -1 })
     .exec()
     .then((resultList) => {
         if (resultList.length < 1) {
@@ -60,7 +61,7 @@ router.get("/all", utils.extractToken, (req, res) => {
         postSchema
         .find({})
         .populate("owner")
-        .sort({ creating_date: 1 })
+        .sort({ creating_date: -1 })
         .skip(req.body.skip)
         .limit(req.body.limit)
         .exec()
@@ -93,9 +94,7 @@ router.get("/all", utils.extractToken, (req, res) => {
 router.get("/me", utils.extractToken, (req, res) => {
     tokenSchema
     .find({ token: req.token })
-    .sort({ creating_date: 1 })
-    .skip(req.body.skip)
-    .limit(req.body.limit)
+    
     .exec()
     .then((resultList) => {
         if (resultList.length < 1) {
@@ -105,6 +104,9 @@ router.get("/me", utils.extractToken, (req, res) => {
         }
         postSchema
         .find({owner_id: resultList[0].user_id})
+        .sort({ creating_date: -1 })
+        .skip(req.body.skip)
+        .limit(req.body.limit)
         .populate("owner")
         .exec()
         .then(result => {
@@ -284,6 +286,19 @@ router.post("/comment/add", utils.extractToken, (req, res) => {
             });
             commentModel
             .save().then(commentResult => {
+                const notificationModel = new notificationSchema({
+                    post_id: req.body.post_id,
+                    post: req.body.post_id,
+                    action_type: 0,
+                    actuator: req.body.user_id,
+                    actuator_id: req.body.user_id,
+                    notification_type: 0,
+                    owner_id: resultList[0].user_id,
+                    owner: resultList[0].user_id,
+                    comment_id: commentResult._id,
+                    poll_id: null
+                });
+                notificationModel.save();
                 res.status(200).json({
                     code: "API.POST.COMMENT.ADD.SUCESS",
                     message: "Comment added successfully",
@@ -313,8 +328,8 @@ router.get("/comment/:id", utils.extractToken, (req, res) => {
                 message: "Invalid Token",
             });
         }
-        postSchema
-        .find({ _id: req.params.id })
+        commentSchema
+        .find({ post_id: req.params.id })
         .populate("owner")
         .exec()
         .then(result => {
@@ -394,6 +409,12 @@ router.post("/vote", utils.extractToken, (req, res) => {
         .findOne({ _id: req.body.post_id })
         .exec()
         .then(result => {
+            if(result == null){
+                return res.status(400).json({
+                    code: "API.POST.VOTE.ADD.FAIL",
+                    message: "Post not found"
+                });
+            }
             if (result.length < 1) {
                 return res.status(400).json({
                     code: "API.POST.VOTE.ADD.FAIL",
@@ -404,6 +425,20 @@ router.post("/vote", utils.extractToken, (req, res) => {
             .findOneAndUpdate({ _id: req.body.post_id },  { $inc: { votes: 1 }  , $push: {voters: resultList[0].user_id}})
             .exec()
             .then(voteResult => {
+                const notificationModel = new notificationSchema({
+                    post_id: req.body.post_id,
+                    post: req.body.post_id,
+                    action_type: 1,
+                    actuator: req.body.user_id,
+                    actuator_id: req.body.user_id,
+                    notification_type: 0,
+                    owner_id: resultList[0].user_id,
+                    owner: resultList[0].user_id,
+                    comment_id: null,
+                    poll_id: null,
+                    creating_date: Date.now()
+                });
+                notificationModel.save();
                 res.status(200).json({
                     code: "API.POST.VOTE.ADD.SUCESS",
                     message: "Vote added successfully",
