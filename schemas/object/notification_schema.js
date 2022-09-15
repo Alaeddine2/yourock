@@ -45,6 +45,13 @@ const schema = new mongoose.Schema({
   },
   poll_id: {
     type: String,
+  },
+  challenge: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "m_challenge",
+  },
+  challenge_id: {
+    type: String,
   }
 });
 

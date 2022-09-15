@@ -14,7 +14,7 @@ const router = express.Router();
 router.post("/me", utils.extractToken, (req, res) => {
     tokenSchema
     .find({ token: req.token })
-    .sort({ creating_date: 1 })
+    .sort({ creating_date: -1 })
     .exec()
     .then((resultList) => {
         if (resultList.length < 1) {
@@ -24,9 +24,11 @@ router.post("/me", utils.extractToken, (req, res) => {
         }
         notificationSchema
         .find({owner_id: resultList[0].user_id})
+        .sort({ creating_date: -1 })
         .populate("owner")
         .populate("actuator")
         .populate("post")
+        .populate("challenge")
         .skip(req.body.skip)
         .limit(req.body.limit)
         .exec()

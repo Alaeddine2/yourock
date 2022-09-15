@@ -51,7 +51,6 @@ router.post("/add", utils.extractToken, (req, res) => {
 router.get("/me", utils.extractToken, (req, res) => {
     tokenSchema
     .find({ token: req.token })
-    
     .exec()
     .then((resultList) => {
         if (resultList.length < 1) {
