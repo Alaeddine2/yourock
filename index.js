@@ -8,6 +8,7 @@ const loginRoute = require("./routes/login_route");
 const toolRoute = require("./routes/tools_routes");
 const actorRoutes = require("./routes/actors/main_routes");
 const objectRoutes = require("./routes/object/main_routes");
+const cronFunction = require("./utils/cron_functions");
 
 require('dotenv').config()
 
@@ -35,6 +36,9 @@ app.use("/actors", actorRoutes);
 app.use("/object", objectRoutes);
 
 app.use(express.static('public'));
+
+//Cron method
+cronFunction.startCron();
 
 const server = app.listen(process.env.PORT || configs.BACKEND_PORT, function () {
     console.log("Student management system backend server is running on port : " + (process.env.PORT || configs.BACKEND_PORT));

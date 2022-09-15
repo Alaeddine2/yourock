@@ -181,8 +181,8 @@ router.post("/accept", utils.extractToken, (req, res) => {
                         comment_id: null,
                         poll_id: null,
                         creating_date: Date.now(),
-                        challenge: resulte._id,
-                        challenge_id: resulte._id
+                        challenge: result._id,
+                        challenge_id: result._id
                     });
                     notificationModel.save();
                     res.status(200).json({
